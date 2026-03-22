@@ -77,12 +77,13 @@
   .btn-p2{background:var(--yellow-bd);color:#fff;}
   .btn-p3{background:var(--green2-bd);color:#fff;}
   .btn-p4{background:var(--purple-bd);color:#fff;}
+  .btn-dl-all{background:#1a1a1a;color:var(--green);border:1px solid var(--green);}
 
   /* REPORT BODY */
-  .reports-body{padding:28px;max-width:1300px;margin:0 auto;}
+  .reports-body{padding:20px 28px;width:100%;}
 
   /* PAGE DIVIDERS */
-  .page-block{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+  .page-block{background:#fff;border-radius:10px;padding:20px 28px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);width:100%;}
   .page-label{font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;margin-bottom:6px;}
   .page-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.03em;color:var(--black);margin-bottom:2px;}
   .page-title span{color:var(--green);}
@@ -90,9 +91,12 @@
   .sec-label{font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #eee;}
 
   /* PAGE 1 — MEAL BREAKDOWN */
-  .meal-block{margin-bottom:8px;border:1.5px solid #eee;border-radius:6px;overflow:hidden;}
+  .meal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  .meal-block{border:1.5px solid #eee;border-radius:6px;overflow:hidden;}
   .meal-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--black);color:#fff;}
+  .meal-header-left{display:flex;flex-direction:column;gap:2px;}
   .meal-header-name{font-size:12px;font-weight:700;letter-spacing:0.01em;}
+  .meal-header-gf{font-size:9px;font-weight:700;color:#86efac;letter-spacing:0.04em;}
   .meal-header-total{font-size:14px;font-weight:900;color:var(--green);}
   .variant-row{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 6px 24px;border-bottom:1px solid #f5f5f5;font-size:11px;}
   .variant-row:last-child{border-bottom:none;}
@@ -100,6 +104,8 @@
   .variant-name .dash{color:#ccc;margin-right:6px;}
   .variant-qty{font-size:13px;font-weight:900;color:var(--black);}
   .variant-note{font-size:11px;color:#999;font-style:italic;margin-left:8px;}
+  .variant-base .variant-name strong{color:var(--black);}
+  .variant-base{background:#fafff7;}
 
   /* GRAND TOTAL BAR */
   .grand-bar{display:flex;justify-content:space-between;align-items:center;background:var(--black);color:#fff;padding:10px 14px;border-radius:6px;margin-top:10px;}
@@ -107,7 +113,7 @@
   .grand-num{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--green);}
 
   /* PAGE 2 — COLOR SQUARES */
-  .color-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+  .color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
   .color-square{border-radius:10px;overflow:hidden;border:2px solid #ddd;}
   .cs-head{padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;}
   .cs-head.yellow{background:var(--yellow-bg);border-bottom:2px solid var(--yellow-bd);}
@@ -187,11 +193,16 @@
   .p4sh-name{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;}
   .p4sh-time{font-size:10px;opacity:.8;margin-top:1px;}
   .p4sh-stats{font-size:9px;font-weight:700;text-align:right;opacity:.9;}
-  .p4-customer{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #f5f5f5;background:#fff;}
+  .p4-customer{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 12px;border-bottom:1px solid #f5f5f5;background:#fff;}
   .p4-customer:last-child{border-bottom:none;}
   .p4c-name{font-size:12px;font-weight:700;color:var(--black);flex:1;}
   .p4c-email{font-size:9px;color:#aaa;margin-top:1px;}
-  .p4c-note{font-size:9px;color:#d97706;font-style:italic;margin-top:1px;font-weight:500;}
+  .p4c-note{font-size:9px;color:#d97706;font-style:italic;margin-top:2px;font-weight:500;}
+  .p4c-stop{font-size:9px;color:#888;margin-top:1px;font-weight:500;}
+  .p4c-gf{font-size:9px;color:#166534;font-weight:700;margin-top:2px;background:#dcfce7;display:inline-block;padding:1px 6px;border-radius:4px;}
+  .p4-gf-row{border-left:3px solid #16a34a!important;}
+  .p4c-left{flex:1;}
+  .p4c-right{text-align:right;flex-shrink:0;padding-left:12px;}
   .p4c-meals{font-size:14px;font-weight:900;color:var(--black);text-align:right;}
   .p4c-meals-lbl{font-size:8px;font-weight:600;color:#aaa;text-align:right;}
   .p4-empty{padding:14px 16px;font-size:12px;color:#ccc;font-style:italic;background:#fff;}
@@ -203,7 +214,7 @@
   @media print {
     @page {
       size: letter portrait;
-      margin: 0.5in 0.55in;
+      margin: 0.4in 0.45in;
     }
 
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -216,6 +227,7 @@
 
     .reports-body {
       padding: 0 !important;
+      width: 100% !important;
       max-width: 100% !important;
     }
 
@@ -287,6 +299,11 @@
 
     /* Doc footer */
     .doc-footer { font-size: 8px !important; padding: 8px 0 0 !important; margin-top: 6px !important; }
+
+    /* Full width on print */
+    .meal-grid { grid-template-columns: 1fr 1fr !important; gap: 5px !important; }
+    .color-grid { grid-template-columns: repeat(5, 1fr) !important; gap: 6px !important; }
+    .page-block { padding: 0 !important; width: 100% !important; }
   }
 </style>
 </head>
@@ -339,6 +356,7 @@
     <div class="rh-center" id="rh-info"></div>
     <div class="rh-actions">
       <button class="btn-action btn-back" onclick="goBack()">← New File</button>
+      <button class="btn-action btn-dl-all" onclick="downloadAll()">⬇ Download All 4</button>
       <button class="btn-action btn-p1" onclick="printPage(1)">🖨 Page 1</button>
       <button class="btn-action btn-p2" onclick="printPage(2)">🖨 Page 2</button>
       <button class="btn-action btn-p3" onclick="printPage(3)">🖨 Page 3</button>
@@ -418,21 +436,37 @@ function processCSV(text){
     if(!ordersMap[num]){
       // Parse pickup location + notes from note attributes
       let pickup='', pickupNote='';
+
+      // Helper to clean up raw note attribute string
+      const parseAttrs = (raw) => {
+        // Format: "Key1: Value1, Key2: Value2" or "Key1: Value1 | Key2: Value2"
+        const clean = raw.replace(/^"|"$/g,'');
+        const locMatch  = clean.match(/Pickup Location[:\s]+([^,|\n]+?)(?=[,|]\s*[A-Z]|$)/i);
+        const noteMatch = clean.match(/Pickup Notes[:\s]+([^,|\n]+?)(?=[,|]\s*[A-Z]|$)/i);
+        return {
+          loc:  locMatch  ? locMatch[1].trim()  : '',
+          note: noteMatch ? noteMatch[1].trim() : ''
+        };
+      };
+
       if(iNotes>-1){
-        const raw=(row[iNotes]||'').replace(/^"|"$/g,'');
-        const mLoc=raw.match(/Pickup Location[:\s]+([^,\n|]+?)(?:\s*[,|]\s*Pickup Notes[:\s]*([^,\n|]+?))?(?:\s*[,|]|$)/i);
-        if(mLoc){ pickup=mLoc[1].trim(); if(mLoc[2]) pickupNote=mLoc[2].trim(); }
-        if(!pickupNote){
-          const mNote=raw.match(/Pickup Notes[:\s]+([^,\n|]+)/i);
-          if(mNote) pickupNote=mNote[1].trim();
-        }
+        const parsed = parseAttrs(row[iNotes]||'');
+        pickup      = parsed.loc;
+        pickupNote  = parsed.note;
       }
-      if(!pickup&&iNote>-1){
-        const raw=(row[iNote]||'');
-        const mL=raw.match(/Pickup Location[:\s]+([^,\n]+)/i);
-        if(mL) pickup=mL[1].trim();
-        const mN=raw.match(/Pickup Notes[:\s]+([^,\n]+)/i);
-        if(mN) pickupNote=mN[1].trim();
+      // Fallback to order note field
+      if((!pickup||!pickupNote) && iNote>-1){
+        const parsed = parseAttrs(row[iNote]||'');
+        if(!pickup)     pickup     = parsed.loc;
+        if(!pickupNote) pickupNote = parsed.note;
+      }
+      // Last resort — check cart note field  
+      if(!pickupNote){
+        const noteCol = headers.findIndex(h=>h==='notes'||h==='note');
+        if(noteCol>-1){
+          const raw=(row[noteCol]||'').replace(/^"|"$/g,'');
+          if(raw && !raw.includes('Pickup Location')) pickupNote = raw.trim();
+        }
       }
 
       ordersMap[num]={
@@ -443,6 +477,7 @@ function processCSV(text){
         pickup,
         pickupNote,
         financial: (row[iFinancial]||''),
+        hasGF: false,
         items:[]
       };
     }
@@ -452,8 +487,12 @@ function processCSV(text){
     const props   =(iProps>-1?(row[iProps]||''):'').replace(/^"|"$/g,'').trim();
     const qty=parseInt(row[iQty]||'0',10);
 
+    // Detect gluten free request from line item properties
+    const isGF = /gluten free request[:\s]*yes/i.test(props);
+    if(isGF && ordersMap[num]) ordersMap[num].hasGF = true;
+
     if(itemName&&qty>0){
-      ordersMap[num].items.push({name:itemName,variant,props,qty});
+      ordersMap[num].items.push({name:itemName,variant,props,qty,isGF});
     }
   }
 
@@ -507,37 +546,94 @@ function buildReports(orders){
   })() : '';
 
   // ── PAGE 1: MEAL BREAKDOWN ──
-  // Group items by product name, then by variant+props
-  const mealMap={};
-  orders.forEach(o=>{
-    o.items.forEach(it=>{
-      if(!mealMap[it.name]) mealMap[it.name]={total:0,variants:{}};
-      mealMap[it.name].total+=it.qty;
-      // Build variant key
-      let vk='Base (as ordered)';
-      if(it.variant && it.variant!=='Default Title' && it.variant!=='') vk=it.variant;
-      if(it.props && it.props!=='') vk+=(vk!=='Base (as ordered)'?' · ':'')+it.props;
-      if(!mealMap[it.name].variants[vk]) mealMap[it.name].variants[vk]=0;
-      mealMap[it.name].variants[vk]+=it.qty;
+  // Known variant suffixes — strip these to get the base meal name
+  const VARIANT_SUFFIXES = [
+    /\s*[-–]\s*Base\s*[-–]\s*Meal As Made$/i,
+    /\s*[-–]\s*Base$/i,
+    /\s*[-–]\s*Extra Protein$/i,
+    /\s*[-–]\s*Low Carb Swap$/i,
+    /\s*[-–]\s*Request for GLUTEN FREE$/i,
+    /\s*[-–]\s*Gluten Free$/i,
+    /\s*[-–]\s*GF$/i,
+  ];
+
+  function getBaseName(title) {
+    for (const rx of VARIANT_SUFFIXES) {
+      if (rx.test(title)) return title.replace(rx, '').trim();
+    }
+    return title;
+  }
+
+  function getVariantLabel(title, baseName) {
+    if (title === baseName) return 'Base (As Ordered)';
+    const raw = title.slice(baseName.length).replace(/^[\s\-–]+/, '').trim();
+    if (!raw || /^base/i.test(raw)) return 'Base (As Ordered)';
+    return raw;
+  }
+
+  function buildItemKey(it) {
+    // Combine variant + GF request into a display key
+    const base = getBaseName(it.name);
+    let label = getVariantLabel(it.name, base);
+    const gfInProps = /gluten free request[:\s]*yes/i.test(it.props||'');
+    if (gfInProps) label += ' + 🌾 GF Request';
+    return label;
+  }
+
+  function isBaseVariant(label) {
+    return /^base/i.test(label);
+  }
+
+  // Group by base name
+  const mealMap = {};
+  orders.forEach(o => {
+    o.items.forEach(it => {
+      const base = getBaseName(it.name);
+      const varLabel = buildItemKey(it);
+      if (!mealMap[base]) mealMap[base] = { total: 0, gfCount: 0, variants: {} };
+      mealMap[base].total += it.qty;
+      if (/🌾/.test(varLabel)) mealMap[base].gfCount += it.qty;
+      if (!mealMap[base].variants[varLabel]) mealMap[base].variants[varLabel] = 0;
+      mealMap[base].variants[varLabel] += it.qty;
     });
   });
 
-  let p1='';
-  Object.entries(mealMap).sort((a,b)=>b[1].total-a[1].total).forEach(([name,data])=>{
-    p1+=`<div class="meal-block">
+  let p1 = '<div class="meal-grid">';
+  Object.entries(mealMap).sort((a, b) => b[1].total - a[1].total).forEach(([name, data]) => {
+    // Sort: Base (As Ordered) always first, then others by qty desc
+    const sorted = Object.entries(data.variants).sort((a, b) => {
+      if (isBaseVariant(a[0]) && !isBaseVariant(b[0])) return -1;
+      if (!isBaseVariant(a[0]) && isBaseVariant(b[0])) return 1;
+      return b[1] - a[1];
+    });
+
+    const gfBadge = data.gfCount > 0
+      ? `<div class="meal-header-gf">🌾 ${data.gfCount} GF request${data.gfCount!==1?'s':''}</div>`
+      : '';
+    p1 += `<div class="meal-block">
       <div class="meal-header">
-        <div class="meal-header-name">${name}</div>
+        <div class="meal-header-left">
+          <div class="meal-header-name">${name}</div>
+          ${gfBadge}
+        </div>
         <div class="meal-header-total">${data.total} total</div>
       </div>`;
-    Object.entries(data.variants).sort((a,b)=>b[1]-a[1]).forEach(([vname,qty])=>{
-      p1+=`<div class="variant-row">
-        <div class="variant-name"><span class="dash">—</span>${vname}</div>
+
+    sorted.forEach(([vname, qty]) => {
+      const isBase = isBaseVariant(vname);
+      p1 += `<div class="variant-row${isBase ? ' variant-base' : ''}">
+        <div class="variant-name">
+          <span class="dash">—</span>
+          ${isBase ? `<strong>${vname}</strong>` : vname}
+        </div>
         <div class="variant-qty">${qty}</div>
       </div>`;
     });
-    p1+=`</div>`;
+
+    p1 += `</div>`;
   });
-  p1+=`<div class="grand-bar"><span class="grand-lbl">Grand Total — All Meals This Week</span><span class="grand-num">${grandMeals} meals · ${grandOrders} orders</span></div>`;
+  p1 += '</div>';
+  p1 += `<div class="grand-bar"><span class="grand-lbl">Grand Total — All Meals This Week</span><span class="grand-num">${grandMeals} meals · ${grandOrders} orders</span></div>`;
 
   // ── PAGE 2: COLOR SQUARES ──
   const cityDefs=[
@@ -627,13 +723,23 @@ function buildReports(orders){
       } else {
         sto.sort((a,b)=>a.name.localeCompare(b.name)).forEach(o=>{
           const om=totalMeals([o]);
-          p4+=`<div class="p4-customer">
-            <div>
+          const noteHtml = o.pickupNote
+            ? `<div class="p4c-note">📝 ${o.pickupNote}</div>`
+            : '';
+          const stopHtml = o.pickup
+            ? `<div class="p4c-stop">${o.pickup}</div>`
+            : '';
+          const gfHtml = o.hasGF
+            ? `<div class="p4c-gf">🌾 Gluten Free Request</div>`
+            : '';
+          p4+=`<div class="p4-customer${o.hasGF?' p4-gf-row':''}">
+            <div class="p4c-left">
               <div class="p4c-name">${o.name||'Unknown'}</div>
-              <div class="p4c-email">${o.email}</div>
-              ${o.pickupNote ? `<div class="p4c-note">📝 ${o.pickupNote}</div>` : ''}
+              ${stopHtml}
+              ${gfHtml}
+              ${noteHtml}
             </div>
-            <div>
+            <div class="p4c-right">
               <div class="p4c-meals">${om}</div>
               <div class="p4c-meals-lbl">meal${om!==1?'s':''}</div>
             </div>
@@ -665,6 +771,39 @@ function buildReports(orders){
 
   document.getElementById('rh-info').innerHTML=metaLine;
   showScreen('screen-reports');
+}
+
+
+// ── DOWNLOAD ALL PAGES ──
+function downloadAll(){
+  const pages=[1,2,3,4];
+  pages.forEach((num,i)=>{
+    setTimeout(()=>{
+      const block=document.getElementById('page-'+num);
+      if(!block)return;
+      const styles=Array.from(document.querySelectorAll('style')).map(s=>s.outerHTML).join('');
+      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+${styles}
+<style>
+  @page{size:letter portrait;margin:0.4in 0.45in;}
+  body{background:#fff;color:#111;font-family:'DM Sans',sans-serif;}
+  .page-block{box-shadow:none!important;border:none!important;padding:0!important;}
+  .cs-head,.cs-foot,.zone-head,.zone-foot,.p4-stop-head,.meal-header,.grand-bar,
+  .color-group-header,.stop-name-bar{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .meal-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+  .color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+</style>
+</head><body>${block.outerHTML}</body></html>`;
+      const blob=new Blob([html],{type:'text/html'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`macrofresh-page-${num}.html`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },i*400);
+  });
 }
 
 // ── PRINT ──
