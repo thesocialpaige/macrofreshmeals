@@ -201,6 +201,7 @@
   .p4c-stop{font-size:9px;color:#888;margin-top:1px;font-weight:500;}
   .p4c-gf{font-size:9px;color:#166534;font-weight:700;margin-top:2px;background:#dcfce7;display:inline-block;padding:1px 6px;border-radius:4px;}
   .p4-gf-row{border-left:3px solid #16a34a!important;}
+  .p4c-sr{font-size:9px;color:#6b21a8;font-style:italic;margin-top:2px;font-weight:500;}
   .p4c-left{flex:1;}
   .p4c-right{text-align:right;flex-shrink:0;padding-left:12px;}
   .p4c-meals{font-size:14px;font-weight:900;color:var(--black);text-align:right;}
@@ -465,8 +466,20 @@ function processCSV(text){
         const noteCol = headers.findIndex(h=>h==='notes'||h==='note');
         if(noteCol>-1){
           const raw=(row[noteCol]||'').replace(/^"|"$/g,'');
-          if(raw && !raw.includes('Pickup Location')) pickupNote = raw.trim();
+          if(raw && !raw.includes('Pickup Location') && !raw.includes('CASH CUSTOMER')) {
+            pickupNote = raw.trim();
+          }
         }
+      }
+
+      // Also check "Note Attributes" column for any extra checkout notes
+      if(!pickupNote && iNotes>-1){
+        const raw=(row[iNotes]||'').replace(/^"|"$/g,'');
+        // Look for anything that's NOT a pickup location or pickup notes field
+        const extraNote = raw.replace(/Pickup Location[:\s]+[^,|\n]+[,|]?/i,'')
+                             .replace(/Pickup Notes[:\s]+[^,|\n]+[,|]?/i,'')
+                             .trim().replace(/^[,|\s]+|[,|\s]+$/g,'');
+        if(extraNote) pickupNote = (pickupNote ? pickupNote + ' · ' : '') + extraNote;
       }
 
       ordersMap[num]={
@@ -487,12 +500,18 @@ function processCSV(text){
     const props   =(iProps>-1?(row[iProps]||''):'').replace(/^"|"$/g,'').trim();
     const qty=parseInt(row[iQty]||'0',10);
 
-    // Detect gluten free request from line item properties
-    const isGF = /gluten free request[:\s]*yes/i.test(props);
+    // Detect gluten free from variant title OR line item properties
+    const isGF = /gluten free/i.test(variant) ||
+                 /gluten free request[:\s]*yes/i.test(props) ||
+                 /gluten free/i.test(itemName);
     if(isGF && ordersMap[num]) ordersMap[num].hasGF = true;
 
+    // Detect special request property
+    const srMatch = props.match(/Special Request[:\s]*([^,|]+)/i);
+    const specialRequest = srMatch ? srMatch[1].trim() : '';
+
     if(itemName&&qty>0){
-      ordersMap[num].items.push({name:itemName,variant,props,qty,isGF});
+      ordersMap[num].items.push({name:itemName,variant,props,qty,isGF,specialRequest});
     }
   }
 
@@ -549,10 +568,13 @@ function buildReports(orders){
   // Known variant suffixes — strip these to get the base meal name
   const VARIANT_SUFFIXES = [
     /\s*[-–]\s*Base\s*[-–]\s*Meal As Made$/i,
+    /\s*[-–]\s*Meal As Made$/i,
     /\s*[-–]\s*Base$/i,
-    /\s*[-–]\s*Extra Protein$/i,
-    /\s*[-–]\s*Low Carb Swap$/i,
+    /\s*[-–]\s*Extra Protein(\s*\(\+\$[\d.]+\))?$/i,
+    /\s*[-–]\s*Low Carb Swap(\s*\(\+\$[\d.]+\))?$/i,
+    /\s*[-–]\s*Low Carb\s*[\/+]\s*Gluten Free(\s*\(\+\$[\d.]+\))?$/i,
     /\s*[-–]\s*Request for GLUTEN FREE$/i,
+    /\s*[-–]\s*Gluten Free Request$/i,
     /\s*[-–]\s*Gluten Free$/i,
     /\s*[-–]\s*GF$/i,
   ];
@@ -572,11 +594,14 @@ function buildReports(orders){
   }
 
   function buildItemKey(it) {
-    // Combine variant + GF request into a display key
     const base = getBaseName(it.name);
     let label = getVariantLabel(it.name, base);
-    const gfInProps = /gluten free request[:\s]*yes/i.test(it.props||'');
-    if (gfInProps) label += ' + 🌾 GF Request';
+    // Flag GF from variant title or props
+    const gfInVariant = /gluten free/i.test(it.variant||'');
+    const gfInProps   = /gluten free request[:\s]*yes/i.test(it.props||'');
+    if (gfInVariant || gfInProps || it.isGF) {
+      if (!label.toLowerCase().includes('gluten free')) label += ' + 🌾 GF';
+    }
     return label;
   }
 
@@ -726,6 +751,12 @@ function buildReports(orders){
           const noteHtml = o.pickupNote
             ? `<div class="p4c-note">📝 ${o.pickupNote}</div>`
             : '';
+
+          // Collect all special requests across items
+          const srItems = o.items.filter(it=>it.specialRequest);
+          const srHtml = srItems.length
+            ? srItems.map(it=>`<div class="p4c-sr">✏️ ${it.name}: ${it.specialRequest}</div>`).join('')
+            : '';
           const stopHtml = o.pickup
             ? `<div class="p4c-stop">${o.pickup}</div>`
             : '';
@@ -738,6 +769,7 @@ function buildReports(orders){
               ${stopHtml}
               ${gfHtml}
               ${noteHtml}
+              ${srHtml}
             </div>
             <div class="p4c-right">
               <div class="p4c-meals">${om}</div>
