@@ -566,71 +566,67 @@ function buildReports(orders){
   })() : '';
 
   // ── PAGE 1: MEAL BREAKDOWN ──
-  // Known variant suffixes — strip these to get the base meal name
-  const VARIANT_SUFFIXES = [
-    /\s*[-–]\s*Base\s*[-–]\s*Meal As Made$/i,
-    /\s*[-–]\s*Meal As Made$/i,
-    /\s*[-–]\s*Base$/i,
-    /\s*[-–]\s*Extra Protein(\s*\(\+\$[\d.]+\))?$/i,
-    /\s*[-–]\s*Low Carb Swap(\s*\(\+\$[\d.]+\))?$/i,
-    /\s*[-–]\s*Low Carb\s*[\/+]\s*Gluten Free(\s*\(\+\$[\d.]+\))?$/i,
-    /\s*[-–]\s*Request for GLUTEN FREE$/i,
-    /\s*[-–]\s*Gluten Free Request$/i,
-    /\s*[-–]\s*Gluten Free$/i,
-    /\s*[-–]\s*GF$/i,
-  ];
 
-  function getBaseName(title) {
-    for (const rx of VARIANT_SUFFIXES) {
-      if (rx.test(title)) return title.replace(rx, '').trim();
-    }
-    return title;
+  // Split product title into base name + variant label
+  // Shopify stores as "Meal Name – Variant1 / Variant2"
+  function splitTitle(title) {
+    // Split on first em-dash or spaced hyphen
+    const m = title.match(/^(.+?)\s*[–-]\s*(.+)$/);
+    if (!m) return { base: title.trim(), variant: '' };
+    return { base: m[1].trim(), variant: m[2].trim() };
   }
 
-  function getVariantLabel(title, baseName) {
-    if (title === baseName) return 'Base (As Ordered)';
-    const raw = title.slice(baseName.length).replace(/^[\s\-–]+/, '').trim();
-    if (!raw || /^base/i.test(raw)) return 'Base (As Ordered)';
-    return raw;
-  }
-
-  function buildItemKey(it) {
-    const base = getBaseName(it.name);
-    let label = getVariantLabel(it.name, base);
-    // Flag GF from variant title or props
-    const gfInVariant = /gluten free/i.test(it.variant||'');
-    const gfInProps   = /gluten free request[:\s]*yes/i.test(it.props||'');
-    if (gfInVariant || gfInProps || it.isGF) {
-      if (!label.toLowerCase().includes('gluten free')) label += ' + 🌾 GF';
-    }
-    return label;
+  function cleanVariantLabel(variant, itemVariant) {
+    // Use Shopify variant field if available and meaningful
+    const v = (itemVariant && itemVariant !== 'Default Title') ? itemVariant : variant;
+    if (!v) return 'Standard (Meal as Made)';
+    // Clean up common noise
+    const cleaned = v
+      .replace(/\*\$5 upcharge\*/gi, '(+$5)')
+      .replace(/\*\$1 upcharge\*/gi, '(+$1)')
+      .trim();
+    return cleaned || 'Standard (Meal as Made)';
   }
 
   function isBaseVariant(label) {
-    return /^base/i.test(label);
+    return /standard.*meal|meal as made|^standard$/i.test(label);
   }
 
-  // Group by base name
+  function extractSpecialRequest(props) {
+    if (!props) return '';
+    // Handle Qikify double-colon format: "Special Requests:: no peppers"
+    // Also handle: "_itemKey: xxx, Special Requests:: text, _optionSetId: xxx"
+    const m = props.match(/Special Requests?:+\s*([^,_][^,]*?)(?:\s*,\s*_|\s*$)/i);
+    if (m) return m[1].trim();
+    return '';
+  }
+
+  function isGFItem(it) {
+    const t = ((it.name||'') + ' ' + (it.variant||'')).toLowerCase();
+    return t.includes('gluten free') || /gluten free request[:\s]*yes/i.test(it.props||'');
+  }
+
+  // Group by base meal name
   const mealMap = {};
   orders.forEach(o => {
     o.items.forEach(it => {
-      const base = getBaseName(it.name);
-      const varLabel = buildItemKey(it);
+      const { base, variant: titleVariant } = splitTitle(it.name);
+      const varLabel = cleanVariantLabel(titleVariant, it.variant);
+      const gf = isGFItem(it);
+
       if (!mealMap[base]) mealMap[base] = { total: 0, gfCount: 0, variants: {} };
       mealMap[base].total += it.qty;
-      if (/🌾/.test(varLabel)) mealMap[base].gfCount += it.qty;
+      if (gf) mealMap[base].gfCount += it.qty;
+
       if (!mealMap[base].variants[varLabel]) mealMap[base].variants[varLabel] = { qty: 0, requests: {} };
       mealMap[base].variants[varLabel].qty += it.qty;
 
-      // Track special requests per variant
-      const srMatch = (it.props||'').match(/Special Requests?[:\s]+(.+?)(?:,\s*_|$)/i);
-      if (srMatch) {
-        const reqText = srMatch[1].trim();
-        if (reqText && reqText !== '') {
-          if (!mealMap[base].variants[varLabel].requests[reqText])
-            mealMap[base].variants[varLabel].requests[reqText] = 0;
-          mealMap[base].variants[varLabel].requests[reqText] += it.qty;
-        }
+      // Extract special request text from Qikify props
+      const reqText = extractSpecialRequest(it.props);
+      if (reqText) {
+        if (!mealMap[base].variants[varLabel].requests[reqText])
+          mealMap[base].variants[varLabel].requests[reqText] = 0;
+        mealMap[base].variants[varLabel].requests[reqText] += it.qty;
       }
     });
   });
