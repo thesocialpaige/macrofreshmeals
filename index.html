@@ -105,6 +105,7 @@
   .variant-qty{font-size:13px;font-weight:900;color:var(--black);}
   .variant-note{font-size:11px;color:#999;font-style:italic;margin-left:8px;}
   .variant-base .variant-name strong{color:var(--black);}
+  .variant-request{background:#fffbeb!important;border-bottom:1px dashed #fde68a!important;}
   .variant-base{background:#fafff7;}
 
   /* GRAND TOTAL BAR */
@@ -618,8 +619,19 @@ function buildReports(orders){
       if (!mealMap[base]) mealMap[base] = { total: 0, gfCount: 0, variants: {} };
       mealMap[base].total += it.qty;
       if (/🌾/.test(varLabel)) mealMap[base].gfCount += it.qty;
-      if (!mealMap[base].variants[varLabel]) mealMap[base].variants[varLabel] = 0;
-      mealMap[base].variants[varLabel] += it.qty;
+      if (!mealMap[base].variants[varLabel]) mealMap[base].variants[varLabel] = { qty: 0, requests: {} };
+      mealMap[base].variants[varLabel].qty += it.qty;
+
+      // Track special requests per variant
+      const srMatch = (it.props||'').match(/Special Requests?[:\s]+(.+?)(?:,\s*_|$)/i);
+      if (srMatch) {
+        const reqText = srMatch[1].trim();
+        if (reqText && reqText !== '') {
+          if (!mealMap[base].variants[varLabel].requests[reqText])
+            mealMap[base].variants[varLabel].requests[reqText] = 0;
+          mealMap[base].variants[varLabel].requests[reqText] += it.qty;
+        }
+      }
     });
   });
 
@@ -629,7 +641,7 @@ function buildReports(orders){
     const sorted = Object.entries(data.variants).sort((a, b) => {
       if (isBaseVariant(a[0]) && !isBaseVariant(b[0])) return -1;
       if (!isBaseVariant(a[0]) && isBaseVariant(b[0])) return 1;
-      return b[1] - a[1];
+      return b[1].qty - a[1].qty;
     });
 
     const gfBadge = data.gfCount > 0
@@ -644,15 +656,25 @@ function buildReports(orders){
         <div class="meal-header-total">${data.total} total</div>
       </div>`;
 
-    sorted.forEach(([vname, qty]) => {
+    sorted.forEach(([vname, vdata]) => {
       const isBase = isBaseVariant(vname);
       p1 += `<div class="variant-row${isBase ? ' variant-base' : ''}">
         <div class="variant-name">
           <span class="dash">—</span>
           ${isBase ? `<strong>${vname}</strong>` : vname}
         </div>
-        <div class="variant-qty">${qty}</div>
+        <div class="variant-qty">${vdata.qty}</div>
       </div>`;
+      // Show special requests as sub-rows
+      Object.entries(vdata.requests).forEach(([reqText, reqQty]) => {
+        p1 += `<div class="variant-row variant-request">
+          <div class="variant-name">
+            <span class="dash" style="color:#d97706;margin-left:16px;">📝</span>
+            <span style="color:#92400e;font-style:italic;">${reqText}</span>
+          </div>
+          <div class="variant-qty" style="color:#92400e;">${reqQty}</div>
+        </div>`;
+      });
     });
 
     p1 += `</div>`;
