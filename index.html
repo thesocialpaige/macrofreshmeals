@@ -594,9 +594,10 @@ function buildReports(orders){
 
   function extractSpecialRequest(props) {
     if (!props) return '';
-    // Handle Qikify double-colon format: "Special Requests:: no peppers"
-    // Also handle: "_itemKey: xxx, Special Requests:: text, _optionSetId: xxx"
-    const m = props.match(/Special Requests?:+\s*([^,_][^,]*?)(?:\s*,\s*_|\s*$)/i);
+    // Qikify exports props with bullet separators or commas:
+    // "_itemKey: xxx • Special Requests:: no peppers • _optionSetId: 151831"
+    // "_itemKey: xxx, Special Requests:: no peppers, _optionSetId: 151831"
+    const m = props.match(/Special Requests?::?\s*([^•,][^•,]*?)(?:\s*[•,]\s*_|\s*$)/i);
     if (m) return m[1].trim();
     return '';
   }
