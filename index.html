@@ -78,6 +78,7 @@
   .btn-p3{background:var(--green2-bd);color:#fff;}
   .btn-p4{background:var(--purple-bd);color:#fff;}
   .btn-dl-all{background:#1a1a1a;color:var(--green);border:1px solid var(--green);}
+  .btn-p5{background:#b45309;color:#fff;}
 
   /* REPORT BODY */
   .reports-body{padding:20px 28px;width:100%;}
@@ -208,6 +209,16 @@
   .p4c-meals{font-size:14px;font-weight:900;color:var(--black);text-align:right;}
   .p4c-meals-lbl{font-size:8px;font-weight:600;color:#aaa;text-align:right;}
   .p4-empty{padding:14px 16px;font-size:12px;color:#ccc;font-style:italic;background:#fff;}
+
+  /* PAGE 5 — SPECIAL REQUESTS */
+  .sr-block{margin-bottom:10px;border:1.5px solid #fde68a;border-radius:8px;overflow:hidden;}
+  .sr-head{background:#111;padding:9px 14px;display:flex;justify-content:space-between;align-items:baseline;}
+  .sr-head-name{font-size:13px;font-weight:800;color:#fff;}
+  .sr-head-stop{font-size:10px;color:#aaa;}
+  .sr-note{background:#fffbeb;padding:9px 14px;border-left:3px solid #f59e0b;}
+  .sr-note-label{font-size:8px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#92400e;margin-bottom:3px;}
+  .sr-note-text{font-size:12px;color:#111;line-height:1.5;}
+  .sr-no-notes{text-align:center;padding:32px;font-size:13px;color:#aaa;font-style:italic;}
 
   /* DOC FOOTER */
   .doc-footer{text-align:center;font-size:11px;color:#aaa;padding:16px 0;border-top:1px dashed #ddd;margin-top:8px;}
@@ -363,6 +374,7 @@
       <button class="btn-action btn-p2" onclick="printPage(2)">🖨 Page 2</button>
       <button class="btn-action btn-p3" onclick="printPage(3)">🖨 Page 3</button>
       <button class="btn-action btn-p4" onclick="printPage(4)">🖨 Page 4</button>
+      <button class="btn-action btn-p5" onclick="printPage(5)">🖨 Page 5</button>
     </div>
   </div>
   <div class="reports-body" id="reports-body"></div>
@@ -483,6 +495,7 @@ function processCSV(text){
         if(extraNote) pickupNote = (pickupNote ? pickupNote + ' · ' : '') + extraNote;
       }
 
+      const plainNote = (iNote>-1?(row[iNote]||''):'').replace(/^"|"$/g,'').trim();
       ordersMap[num]={
         num,
         name: (row[iBillName]||'').replace(/^"|"$/g,''),
@@ -490,6 +503,7 @@ function processCSV(text){
         created: (row[iCreated]||''),
         pickup,
         pickupNote,
+        note: plainNote,
         financial: (row[iFinancial]||''),
         hasGF: false,
         items:[]
@@ -801,6 +815,35 @@ function buildReports(orders){
     });
   });
 
+  // ── PAGE 5: SPECIAL REQUESTS / PICKUP NOTES ──
+  let p5 = '';
+  const srOrders = orders.filter(o => {
+    const hasPickupNote = o.pickupNote && o.pickupNote.trim() !== '';
+    const hasNote = o.note && o.note.trim() !== '' && !o.note.includes('CASH CUSTOMER');
+    return hasPickupNote || hasNote;
+  });
+
+  if (!srOrders.length) {
+    p5 = '<div class="sr-no-notes">No special requests or notes found this week.</div>';
+  } else {
+    // Sort by stop
+    srOrders.sort((a,b) => (a.pickup||'').localeCompare(b.pickup||''));
+    srOrders.forEach(o => {
+      const noteText = [o.pickupNote, (!o.note||o.note.includes('CASH CUSTOMER')) ? '' : o.note]
+        .filter(Boolean).join(' — ');
+      p5 += `<div class="sr-block">
+        <div class="sr-head">
+          <div class="sr-head-name">${o.name||'Unknown'}</div>
+          <div class="sr-head-stop">${o.pickup||'No stop selected'}</div>
+        </div>
+        <div class="sr-note">
+          <div class="sr-note-label">📝 Note / Special Request</div>
+          <div class="sr-note-text">${noteText}</div>
+        </div>
+      </div>`;
+    });
+  }
+
   // ── ASSEMBLE ──
   const printedAt=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const metaLine=`${weekOf} &nbsp;·&nbsp; ${grandOrders} orders &nbsp;·&nbsp; ${grandMeals} total meals &nbsp;·&nbsp; Generated ${new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`;
@@ -818,7 +861,8 @@ function buildReports(orders){
     makeBlock(1,'Meal','Breakdown',p1)+
     makeBlock(2,'Color','Stop Overview',p2)+
     makeBlock(3,'Zone','Totals',p3)+
-    makeBlock(4,'Customer','Breakdown by Stop',p4);
+    makeBlock(4,'Customer','Breakdown by Stop',p4)+
+    makeBlock(5,'Special','Requests & Notes',p5);
 
   document.getElementById('rh-info').innerHTML=metaLine;
   showScreen('screen-reports');
@@ -862,6 +906,7 @@ function printPage(num){
   document.querySelectorAll('.page-block').forEach((el,i)=>{
     el.style.display=(i+1===num)?'block':'none';
   });
+
   document.querySelector('.reports-header').style.display='none';
   window.print();
   document.querySelectorAll('.page-block').forEach(el=>el.style.display='');
