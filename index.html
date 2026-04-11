@@ -621,16 +621,24 @@ function buildReports(orders){
     return t.includes('gluten free') || /gluten free request[:\s]*yes/i.test(it.props||'');
   }
 
-  // Category sort order for Page 1
-  const CAT_ORDER = ['breakfast', 'macro-meal', 'soup-salad', 'snack'];
+  // Meal category lookup — built from MacroFresh meal sheet
+  // 0=Breakfast, 1=Macro Meal, 2=Soup/Salad, 3=Snack, 4=Unknown
+  const MEAL_CAT_LOOKUP = {"Breakfast Taco Bowl": 0, "Parmesan Crusted Chicken with Mashed Potatoes": 1, "Protein Rice Crispy Treat": 3, "Macro Market Fresh Salad": 2, "Pumpkin Baked Oatmeal": 0, "Creamy Butternut Squash and Sausage Soup": 2, "Philly Cheesecake Quesadilla": 1, "White Cheddar and Spinach Burger with Roasted Red Potatoes": 1, "Hibachi Chicken with Fried Rice and Veggies": 1, "Carnita Bowl with Mexican Street Corn and Cilantro Lime Rice": 1, "Outback Chicken with Homestyle Green Beans": 1, "Jalapeno Popper Breakfast Casserole": 0, "Strawberry Crunch Salad": 2, "Cracked Out Chicken & Broccoli Potato Bowl": 1, "Loaded Potato Bowl": 1, "Honey BBQ Chicken & Mac": 1, "Chicken Parmesan Meatloaf wih Mashed Potatoes": 1, "Pizza Quesadilla with Side Salad": 2, "Buffalo Chicken Soup": 2, "Mexican Street Corn Bowl": 1, "Crack Chicken Burger with Garlic Parmesan Potato Bites": 1, "Creamy Tomato Basil Chicken Alfredo": 1, "Buffalo Chicken Mac & Cheese": 1, "Bourbon Chicken with White Rice": 1, "Cracked Out Breakfast Bake": 0, "Macro Bites": 3, "Big Mac Potato Bowl": 1, "Philly Cheesesteak Potato Bowl": 1, "Harvest Chopped Salad": 2, "Korean BBQ Meatballs with White Rice": 1, "Chicken or Shrimp Alfredo with Broccoli": 1, "Cobb Salad": 2, "Chicken and Broccoli with White Rice": 1, "Protein Puppy Chow": 3, "Fiesta Lime Chicken with Cilantro Lime Rice": 1, "Chicken or Shrimp Scampi": 1, "Breakfast Egg Bake": 0, "Chicken Club Flatbread with Chiptole Ranch": 1, "Fresh Snack Box": 3, "Cilantro Lime Taco Salad": 2, "Chili Lime Chicken Burger": 2, "Low-Carb Chicken Fajita Tacos": 1, "Viral! Loaded Sweet Potato Boat": 1, "Black Pepper Chicken with White Rice": 1, "Southwest Chicken Bowl": 1, "Caramel Apple Parfait": 3, "Strawberry- Cheesecake Cup": 3, "Chocolate Overnight Oats": 0, "Monterey Chicken with Green Beans": 1, "Sweet Chili Chicken Bowl w/Rice & Pineapple Salsa": 2, "Chicken Enchilidia Meatloaf w/ Cilantro Lime Rice": 2, "Lemon Blueberry Cheesecake Cups": 3, "Bang Bang Chicken Bowl": 1, "Berry Parfait": 3, "Chicken Wonton Taco Bowl": 1, "Breakfast Burrito (Sausage)": 0, "Fiesta Lime Chicken Wrap": 1, "Creamy Sausage Orzo Skillet": 1, "Bourbon Chicken Loaded Mac": 1, "Salsa Verde & Pepper Jack Chicken Bowl": 1, "Italian Beef Pasta Bake": 1, "Sweet Chili Crunch Chicken Wrap": 2, "Cajun Chicken or Shrimp Cobb Salad": 2, "Pina Coloda Parfait": 3, "Jalepeno Popper Salad": 2, "Street Corn Power Wrap": 1, "Lemon Herb Chicken Orzo": 1, "Orange Chicken": 1, "Bang Bang Chicken Wrap": 1, "Smashed Redskin Potato Bowl": 1, "Breakfast Burrito (Ham)": 0, "Macro Muffin": 0, "Chicken Bacon Caesar Pasta Salad": 2, "Chicken & Shrimp Hibachi Bowl": 1, "Viral Pickle Dip": 3};
 
-  function getCatRank(tags) {
-    const t = (tags||'').toLowerCase();
-    if (t.includes('breakfast'))  return 0;
-    if (t.includes('macro-meal')) return 1;
-    if (t.includes('soup-salad')) return 2;
-    if (t.includes('snack'))      return 3;
-    return 4;
+  function getMealCatRank(mealName) {
+    // Try exact match first
+    if (MEAL_CAT_LOOKUP[mealName] !== undefined) return MEAL_CAT_LOOKUP[mealName];
+    // Try partial match (in case title has variant suffix still attached)
+    for (const [key, rank] of Object.entries(MEAL_CAT_LOOKUP)) {
+      if (mealName.toLowerCase().startsWith(key.toLowerCase())) return rank;
+      if (key.toLowerCase().startsWith(mealName.toLowerCase())) return rank;
+    }
+    // Fallback keyword detection
+    const n = mealName.toLowerCase();
+    if (/breakfast|burrito|oatmeal|parfait|scramble|taco bowl|bake|egg/i.test(n)) return 0;
+    if (/soup|salad|chili/i.test(n)) return 2;
+    if (/treat|crispy|smore|puppy chow|protein ball|cookie/i.test(n)) return 3;
+    return 1;
   }
 
   // Group by base meal name
@@ -647,13 +655,8 @@ function buildReports(orders){
       mealMap[base].total += it.qty;
       if (gf) mealMap[base].gfCount += it.qty;
 
-      // Infer category from meal name keywords
-      const nameLower = base.toLowerCase();
-      let rank = 4;
-      if (/breakfast|burrito|oatmeal|parfait|scramble|taco bowl|bake|egg/i.test(nameLower)) rank = 0;
-      else if (/soup|salad|chili/i.test(nameLower)) rank = 2;
-      else if (/treat|crispy|smore|puppy chow|protein ball|cookie|snack/i.test(nameLower)) rank = 3;
-      else rank = 1; // default to macro meal
+      // Look up category from meal sheet data
+      const rank = getMealCatRank(base);
       if (rank < mealMap[base].catRank) mealMap[base].catRank = rank;
 
       if (!mealMap[base].variants[varLabel]) mealMap[base].variants[varLabel] = { qty: 0, requests: {} };
