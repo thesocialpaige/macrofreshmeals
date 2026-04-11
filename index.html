@@ -621,6 +621,18 @@ function buildReports(orders){
     return t.includes('gluten free') || /gluten free request[:\s]*yes/i.test(it.props||'');
   }
 
+  // Category sort order for Page 1
+  const CAT_ORDER = ['breakfast', 'macro-meal', 'soup-salad', 'snack'];
+
+  function getCatRank(tags) {
+    const t = (tags||'').toLowerCase();
+    if (t.includes('breakfast'))  return 0;
+    if (t.includes('macro-meal')) return 1;
+    if (t.includes('soup-salad')) return 2;
+    if (t.includes('snack'))      return 3;
+    return 4;
+  }
+
   // Group by base meal name
   const mealMap = {};
   orders.forEach(o => {
@@ -629,9 +641,20 @@ function buildReports(orders){
       const varLabel = cleanVariantLabel(titleVariant, it.variant);
       const gf = isGFItem(it);
 
-      if (!mealMap[base]) mealMap[base] = { total: 0, gfCount: 0, variants: {} };
+      // Try to get tags from the item (Shopify CSV doesn't export product tags per line item)
+      // So we infer category from the meal name as fallback
+      if (!mealMap[base]) mealMap[base] = { total: 0, gfCount: 0, variants: {}, catRank: 4 };
       mealMap[base].total += it.qty;
       if (gf) mealMap[base].gfCount += it.qty;
+
+      // Infer category from meal name keywords
+      const nameLower = base.toLowerCase();
+      let rank = 4;
+      if (/breakfast|burrito|oatmeal|parfait|scramble|taco bowl|bake|egg/i.test(nameLower)) rank = 0;
+      else if (/soup|salad|chili/i.test(nameLower)) rank = 2;
+      else if (/treat|crispy|smore|puppy chow|protein ball|cookie|snack/i.test(nameLower)) rank = 3;
+      else rank = 1; // default to macro meal
+      if (rank < mealMap[base].catRank) mealMap[base].catRank = rank;
 
       if (!mealMap[base].variants[varLabel]) mealMap[base].variants[varLabel] = { qty: 0, requests: {} };
       mealMap[base].variants[varLabel].qty += it.qty;
@@ -647,7 +670,11 @@ function buildReports(orders){
   });
 
   let p1 = '<div class="meal-grid">';
-  Object.entries(mealMap).sort((a, b) => b[1].total - a[1].total).forEach(([name, data]) => {
+  Object.entries(mealMap).sort((a, b) => {
+    // Sort by category first, then by qty within category
+    if (a[1].catRank !== b[1].catRank) return a[1].catRank - b[1].catRank;
+    return b[1].total - a[1].total;
+  }).forEach(([name, data]) => {
     // Sort: Base (As Ordered) always first, then others by qty desc
     const sorted = Object.entries(data.variants).sort((a, b) => {
       if (isBaseVariant(a[0]) && !isBaseVariant(b[0])) return -1;
